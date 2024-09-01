@@ -1,0 +1,59 @@
+originalColumnName,newColumnName,description,dataType
+city,city,Name of the city,string
+country,country,Name of the country,string
+x1,mealInexpensiveRestaurant,"Meal, Inexpensive Restaurant (USD)",float64
+x2,mealFor2MidRange,"Meal for 2 People, Mid-range Restaurant, Three-course (USD)",float64
+x3,comboMealMcdonalds,McMeal at McDonalds (or Equivalent Combo Meal) (USD),float64
+x4,domesticBeerRestaurant,"Domestic Beer (0.5 liter draught, in restaurants) (USD)",float64
+x5,importedBeerRestaurant,"Imported Beer (0.33 liter bottle, in restaurants) (USD)",float64
+x6,cappuccinoRestaurant,"Cappuccino (regular, in restaurants) (USD)",float64
+x7,sodaRestaurant,"Coke/Pepsi (0.33 liter bottle, in restaurants) (USD)",float64
+x8,waterRestaurant,"Water (0.33 liter bottle, in restaurants) (USD)",float64
+x9,milk1L,"Milk (regular), (1 liter) (USD)",float64
+x10,breadLoaf,Loaf of Fresh White Bread (500g) (USD),float64
+x11,rice1Kg,"Rice (white), (1kg) (USD)",float64
+x12,eggs12Pack,Eggs (regular) (12) (USD),float64
+x13,localCheese1Kg,Local Cheese (1kg) (USD),float64
+x14,chickenFillet1Kg,Chicken Fillets (1kg) (USD),float64
+x15,beefRound1Kg,Beef Round (1kg) (or Equivalent Back Leg Red Meat) (USD),float64
+x16,apples1Kg,Apples (1kg) (USD),float64
+x17,banana1Kg,Banana (1kg) (USD),float64
+x18,oranges1Kg,Oranges (1kg) (USD),float64
+x19,tomato1Kg,Tomato (1kg) (USD),float64
+x20,potato1Kg,Potato (1kg) (USD),float64
+x21,onion1Kg,Onion (1kg) (USD),float64
+x22,lettuceHead,Lettuce (1 head) (USD),float64
+x23,water1_5LMarket,"Water (1.5 liter bottle, at the market) (USD)",float64
+x24,wineMidRange,"Bottle of Wine (Mid-Range, at the market) (USD)",float64
+x25,domesticBeerMarket,"Domestic Beer (0.5 liter bottle, at the market) (USD)",float64
+x26,importedBeerMarket,"Imported Beer (0.33 liter bottle, at the market) (USD)",float64
+x27,cigarettesPack,Cigarettes 20 Pack (Marlboro) (USD),float64
+x28,ticketOneWay,One-way Ticket (Local Transport) (USD),float64
+x29,monthlyPass,Monthly Pass (Regular Price) (USD),float64
+x30,taxiStart,Taxi Start (Normal Tariff) (USD),float64
+x31,taxi1Km,Taxi 1km (Normal Tariff) (USD),float64
+x32,taxiWaiting1Hour,Taxi 1hour Waiting (Normal Tariff) (USD),float64
+x33,gasoline1L,Gasoline (1 liter) (USD),float64
+x34,vwGolfNew,Volkswagen Golf 1.4 90 KW Trendline (Or Equivalent New Car) (USD),float64
+x35,toyotaCorollaNew,Toyota Corolla Sedan 1.6l 97kW Comfort (Or Equivalent New Car) (USD),float64
+x36,utilities85sqmApartment,"Basic (Electricity, Heating, Cooling, Water, Garbage) for 85m2 Apartment (USD)",float64
+x37,mobileTariff1Min,1 min. of Prepaid Mobile Tariff Local (No Discounts or Plans) (USD),float64
+x38,internetUnlimited,"Internet (60 Mbps or More, Unlimited Data, Cable/ADSL) (USD)",float64
+x39,fitnessClubMonthly,"Fitness Club, Monthly Fee for 1 Adult (USD)",float64
+x40,tennisCourtHourly,Tennis Court Rent (1 Hour on Weekend) (USD),float64
+x41,cinemaTicket,"Cinema, International Release, 1 Seat (USD)",float64
+x42,preschoolMonthly,"Preschool (or Kindergarten), Full Day, Private, Monthly for 1 Child (USD)",float64
+x43,intlPrimarySchoolYearly,"International Primary School, Yearly for 1 Child (USD)",float64
+x44,jeans,1 Pair of Jeans (Levis 501 Or Similar) (USD),float64
+x45,summerDress,"1 Summer Dress in a Chain Store (Zara, H&M, …) (USD)",float64
+x46,nikeShoes,1 Pair of Nike Running Shoes (Mid-Range) (USD),float64
+x47,leatherShoes,1 Pair of Men Leather Business Shoes (USD),float64
+x48,apt1BedCityCenter,Apartment (1 bedroom) in City Centre (USD),float64
+x49,apt1BedOutsideCenter,Apartment (1 bedroom) Outside of Centre (USD),float64
+x50,apt3BedCityCenter,Apartment (3 bedrooms) in City Centre (USD),float64
+x51,apt3BedOutsideCenter,Apartment (3 bedrooms) Outside of Centre (USD),float64
+x52,pricePerSqmCityCenter,Price per Square Meter to Buy Apartment in City Centre (USD),float64
+x53,pricePerSqmOutsideCenter,Price per Square Meter to Buy Apartment Outside of Centre (USD),float64
+x54,avgNetSalary,Average Monthly Net Salary (After Tax) (USD),float64
+x55,mortgageRate,"Mortgage Interest Rate in Percentages (%), Yearly, for 20 Years Fixed-Rate",float64
+data_quality,dataQuality,"0 if Numbeo considers that more contributors are needed to increase data quality, else 1",int
