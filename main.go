@@ -23,6 +23,12 @@ func main() {
 	}
 	defer fsClient.Close()
 
-	costOfLivingService := services.NewCostOfLivingService(fsClient)
-	costOfLivingService.PopulateCostOfTravelData(ctx)
+	// costOfLivingService := services.NewCostOfLivingService(fsClient)
+	// costOfLivingService.PopulateCostOfTravelData(ctx)
+
+	// cleanupService := services.NewCostOfLivingCleanupService(fsClient)
+	// cleanupService.CleanupCostOfLivingData(ctx)
+
+	migrationService := services.NewCostOfLivingMigrationService(fsClient)
+	migrationService.MigrateCostOfLivingData(ctx)
 }
