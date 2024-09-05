@@ -29,6 +29,12 @@ func main() {
 	// cleanupService := services.NewCostOfLivingCleanupService(fsClient)
 	// cleanupService.CleanupCostOfLivingData(ctx)
 
-	migrationService := services.NewCostOfLivingMigrationService(fsClient)
-	migrationService.MigrateCostOfLivingData(ctx)
+	// migrationService := services.NewCostOfLivingMigrationService(fsClient)
+	// migrationService.MigrateCostOfLivingData(ctx)
+
+	analyzerService := services.NewCostOfLivingAnalyzerService(fsClient)
+	err = analyzerService.AnalyzeAndStoreData(ctx)
+	if err != nil {
+		logger.LogFatalLn("Failed to analyze and store data: %v", err)
+	}
 }

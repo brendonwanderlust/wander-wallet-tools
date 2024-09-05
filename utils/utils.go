@@ -1,11 +1,11 @@
 package utils
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 	"unicode"
 
-	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
@@ -40,12 +40,19 @@ func ConvertValueFromString(value string, toDataType string) interface{} {
 	return value
 }
 
-func RemoveAccents(s string) string {
-	t := transform.Chain(norm.NFD, transform.RemoveFunc(func(r rune) bool {
-		return unicode.Is(unicode.Mn, r)
-	}), norm.NFC)
-	result, _, _ := transform.String(t, s)
-	return result
+func RemoveAccentsAndSpecialChars(input string) string {
+	t := norm.NFD.String(input)
+	var builder strings.Builder
+	for _, r := range t {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			builder.WriteRune(r)
+		}
+	}
+	reg, _ := regexp.Compile("[^a-zA-Z0-9]+")
+	return reg.ReplaceAllString(builder.String(), "")
 }
 
 func GetString(m map[string]interface{}, key string) string {
@@ -69,7 +76,7 @@ func GetStringSlice(m map[string]interface{}, key string) []string {
 }
 
 func NormalizeAndFormat(s string) string {
-	result := RemoveAccents(s)
+	result := RemoveAccentsAndSpecialChars(s)
 	result = strings.ToLower(result)
 	result = strings.ReplaceAll(result, "/", "")
 	result = strings.ReplaceAll(result, " ", "")
