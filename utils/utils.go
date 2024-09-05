@@ -82,3 +82,12 @@ func NormalizeAndFormat(s string) string {
 	result = strings.ReplaceAll(result, " ", "")
 	return result
 }
+
+func FirstLetterToLower(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
+}

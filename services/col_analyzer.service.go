@@ -118,8 +118,8 @@ func (s *CostOfLivingAnalyzerService) analyzeData(colData []CostOfLiving) []Cost
 			if value > 0 {
 				allValues := s.getAllMetricValues(colData, metric)
 				percentile := s.calculatePercentile(allValues, value)
-				scores[metric] = percentile
-				stats[metric] = s.calculateStats(allValues)
+				scores[utils.FirstLetterToLower(metric)] = percentile
+				stats[utils.FirstLetterToLower(metric)] = s.calculateStats(allValues)
 			}
 		}
 		relativeScores = append(relativeScores, CostOfLivingAnalytics{
