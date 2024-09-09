@@ -37,10 +37,9 @@ func main() {
 	// if err != nil {
 	// 	logger.LogFatalLn("Failed to analyze and store data: %v", err)
 	// }
-
 	topDestService := services.NewTopDestinationsService(fsClient)
-	err = topDestService.GenerateTopDestinationsCSV(ctx)
+	err = topDestService.ProcessAndSaveTopDestinations(ctx)
 	if err != nil {
-		logger.LogFatalLn("Failed to generate top destinations CSV: %v", err)
+		logger.LogFatalLn("Failed to process and save top destinations: %v", err)
 	}
 }
