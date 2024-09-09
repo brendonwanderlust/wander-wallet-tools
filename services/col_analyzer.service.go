@@ -113,15 +113,29 @@ func (s *CostOfLivingAnalyzerService) analyzeData(colData []CostOfLiving) []Cost
 	for _, location := range colData {
 		scores := make(map[string]float64)
 		stats := make(map[string]MetricStats)
+		var totalScore float64
+		var scoreCount int
+
 		for _, metric := range metricsToAnalyze {
 			value := s.getMetricValue(location, metric)
 			if value > 0 {
 				allValues := s.getAllMetricValues(colData, metric)
 				percentile := s.calculatePercentile(allValues, value)
-				scores[utils.FirstLetterToLower(metric)] = percentile
-				stats[utils.FirstLetterToLower(metric)] = s.calculateStats(allValues)
+				metricKey := utils.FirstLetterToLower(metric)
+				scores[metricKey] = percentile
+				stats[metricKey] = s.calculateStats(allValues)
+
+				// Add to total score for average calculation
+				totalScore += percentile
+				scoreCount++
 			}
 		}
+
+		// Calculate and add the overall score
+		if scoreCount > 0 {
+			scores["overall"] = totalScore / float64(scoreCount)
+		}
+
 		relativeScores = append(relativeScores, CostOfLivingAnalytics{
 			City:    location.City,
 			Country: location.Country,

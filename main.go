@@ -32,9 +32,15 @@ func main() {
 	// migrationService := services.NewCostOfLivingMigrationService(fsClient)
 	// migrationService.MigrateCostOfLivingData(ctx)
 
-	analyzerService := services.NewCostOfLivingAnalyzerService(fsClient)
-	err = analyzerService.AnalyzeAndStoreData(ctx)
+	// analyzerService := services.NewCostOfLivingAnalyzerService(fsClient)
+	// err = analyzerService.AnalyzeAndStoreData(ctx)
+	// if err != nil {
+	// 	logger.LogFatalLn("Failed to analyze and store data: %v", err)
+	// }
+
+	topDestService := services.NewTopDestinationsService(fsClient)
+	err = topDestService.GenerateTopDestinationsCSV(ctx)
 	if err != nil {
-		logger.LogFatalLn("Failed to analyze and store data: %v", err)
+		logger.LogFatalLn("Failed to generate top destinations CSV: %v", err)
 	}
 }
