@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"wander-wallet-tools/config"
 	"wander-wallet-tools/logger"
+	"wander-wallet-tools/models"
 	"wander-wallet-tools/services"
 )
 
@@ -11,6 +13,7 @@ func main() {
 	logger.LogInfoLn("Logger initialized")
 
 	ctx := context.Background()
+	cfg := config.NewConfig(models.Dev)
 
 	fbApp, err := services.NewFirebaseApp(ctx)
 	if err != nil {
@@ -37,9 +40,16 @@ func main() {
 	// if err != nil {
 	// 	logger.LogFatalLn("Failed to analyze and store data: %v", err)
 	// }
-	topDestService := services.NewTopDestinationsService(fsClient)
-	err = topDestService.ProcessAndSaveTopDestinations(ctx)
+	// topDestService := services.NewTopDestinationsService(fsClient)
+	// err = topDestService.ProcessAndSaveTopDestinations(ctx)
+	// if err != nil {
+	// 	logger.LogFatalLn("Failed to process and save top destinations: %v", err)
+	// }
+
+	enrichService := services.NewTopDestinationEnrichmentService(fsClient, cfg)
+	err = enrichService.EnrichTopDestinations(ctx)
 	if err != nil {
-		logger.LogFatalLn("Failed to process and save top destinations: %v", err)
+		logger.LogFatalLn("Failed to enrich top destinations: %v", err)
 	}
+
 }
