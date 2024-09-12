@@ -1,5 +1,10 @@
 package models
 
+import (
+	"fmt"
+	"wander-wallet-tools/utils"
+)
+
 type CostOfLiving struct {
 	City                      string  `firestore:"city"`
 	Country                   string  `firestore:"country"`
@@ -59,4 +64,12 @@ type CostOfLiving struct {
 	AvgNetSalary              float64 `firestore:"avgNetSalary"`
 	MortgageRate              float64 `firestore:"mortgageRate"`
 	DataQuality               int     `firestore:"dataQuality"`
+}
+
+func GetCostOfLivingPath(city, country string) string {
+	collectionName := "cost-of-living"
+	formattedCity := utils.NormalizeAndFormat(city)
+	formattedCountry := utils.NormalizeAndFormat(country)
+	id := fmt.Sprintf("%s-%s", formattedCity, formattedCountry)
+	return fmt.Sprintf("%s/%s", collectionName, id)
 }

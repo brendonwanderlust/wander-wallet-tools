@@ -18,6 +18,7 @@ type AddressComponent struct {
 }
 
 type LocationMapping struct {
+	Id                string             `firestore:"id"`
 	StandardName      string             `firestore:"standardName"`
 	PlaceId           string             `firestore:"placeId"`
 	DisplayName       string             `firestore:"displayName"`
@@ -55,12 +56,12 @@ func ConstructStandardName(sublocality, city, stateOrProvince, country string) s
 		if part == "" {
 			continue
 		}
+		part = utils.RemoveAccentsAndSpecialChars(part)
 		parts = append(parts, part)
 	}
 
 	combined := strings.Join(parts, "-")
 	combined = strings.ToLower(combined)
-	combined = utils.RemoveAccentsAndSpecialChars(combined)
 	combined = strings.ReplaceAll(combined, " ", "")
 	combined = strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) || r == '-' {
@@ -207,8 +208,7 @@ func MapAddressComponents(modelComponents []AddressComponent) []AddressComponent
 	}
 	return firestoreComponents
 }
-
-func uniqueNonEmptyStrings(strs ...string) []string {
+func UniqueNonEmptyStrings(strs ...string) []string {
 	unique := make(map[string]bool)
 	var result []string
 	for _, str := range strs {

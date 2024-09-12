@@ -6,37 +6,28 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
+	"time"
 	"wander-wallet-tools/config"
 	"wander-wallet-tools/logger"
 	"wander-wallet-tools/models"
 
 	"cloud.google.com/go/firestore"
 	"github.com/sirupsen/logrus"
+	"googlemaps.github.io/maps"
 )
-
-type TopDestination struct {
-	Id                string   `firestore:"id"`
-	City              string   `firestore:"city"`
-	Country           string   `firestore:"country"`
-	Rank              int64    `firestore:"rank"`
-	PlaceId           string   `firestore:"placeId"`
-	PhotoUri1         string   `firestore:"photoUri1"`
-	PhotoUri2         string   `firestore:"photoUri2"`
-	Photos            []string `firestore:"photos"`
-	DownloadAvg       float64  `firestore:"downloadAvg"`
-	SafetyScore       int64    `firestore:"safetyScore"`
-	CostOfLivingScore float64  `firestore:"costOfLivingScore"`
-}
 
 type TopDestinationEnrichmentService struct {
 	firestoreClient *firestore.Client
 	cfg             *config.Config
+	mapsClient      *maps.Client
 }
 
-func NewTopDestinationEnrichmentService(client *firestore.Client, cfg *config.Config) *TopDestinationEnrichmentService {
+func NewTopDestinationEnrichmentService(client *firestore.Client, cfg *config.Config, mapsClient *maps.Client) *TopDestinationEnrichmentService {
 	return &TopDestinationEnrichmentService{
 		firestoreClient: client,
 		cfg:             cfg,
+		mapsClient:      mapsClient,
 	}
 }
 
@@ -71,15 +62,15 @@ func (s *TopDestinationEnrichmentService) EnrichTopDestinations(ctx context.Cont
 	return nil
 }
 
-func (s *TopDestinationEnrichmentService) getTopDestinations(ctx context.Context) ([]TopDestination, error) {
-	var destinations []TopDestination
-	docs, err := s.firestoreClient.Collection("top-destinations").OrderBy("rank", firestore.Asc).Limit(20).Documents(ctx).GetAll()
+func (s *TopDestinationEnrichmentService) getTopDestinations(ctx context.Context) ([]models.TopDestination, error) {
+	var destinations []models.TopDestination
+	docs, err := s.firestoreClient.Collection("top-destinations").OrderBy("rank", firestore.Asc).Offset(60).Limit(90).Documents(ctx).GetAll()
 	if err != nil {
 		return nil, err
 	}
 
 	for _, doc := range docs {
-		var dest TopDestination
+		var dest models.TopDestination
 		if err := doc.DataTo(&dest); err != nil {
 			logger.LogErrorWithFields("Failed to parse top destination", logrus.Fields{
 				"Error": err.Error(),
@@ -94,11 +85,13 @@ func (s *TopDestinationEnrichmentService) getTopDestinations(ctx context.Context
 	return destinations, nil
 }
 
-func (s *TopDestinationEnrichmentService) enrichDestination(ctx context.Context, dest *TopDestination) error {
-	mapping, err := s.getLocationMapping(ctx, dest.City, dest.Country)
+func (s *TopDestinationEnrichmentService) enrichDestination(ctx context.Context, dest *models.TopDestination) error {
+	mapping, err := s.getLocationMapping(ctx, *dest)
 	if err != nil {
 		return fmt.Errorf("failed to get location mapping: %v", err)
 	}
+
+	dest.PlaceId = mapping.PlaceId
 
 	if mapping.InternetSpeedRef != nil {
 		internetSpeed, err := s.getInternetSpeed(ctx, mapping.InternetSpeedRef)
@@ -161,15 +154,20 @@ func (s *TopDestinationEnrichmentService) enrichDestination(ctx context.Context,
 	return nil
 }
 
-func (s *TopDestinationEnrichmentService) getLocationMapping(ctx context.Context, city, country string) (*models.LocationMapping, error) {
-	query := s.firestoreClient.Collection("location-mappings").Where("city", "==", city).Where("country", "==", country)
+func (s *TopDestinationEnrichmentService) getLocationMapping(ctx context.Context, dest models.TopDestination) (*models.LocationMapping, error) {
+	query := s.firestoreClient.Collection("location-mappings").Where("city", "==", dest.City).Where("country", "==", dest.Country)
 	docs, err := query.Documents(ctx).GetAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to query location mappings: %v", err)
 	}
 
 	if len(docs) == 0 {
-		return nil, fmt.Errorf("no location mapping found for city %s and country %s", city, country)
+		mapping, err := s.createLocationMapping(ctx, dest)
+		if err != nil {
+			return nil, fmt.Errorf("no location mapping locatoin mapping was able to be created", err)
+		}
+
+		return mapping, nil
 	}
 
 	var bestMapping *models.LocationMapping
@@ -186,6 +184,102 @@ func (s *TopDestinationEnrichmentService) getLocationMapping(ctx context.Context
 	}
 
 	return bestMapping, nil
+}
+
+func (s *TopDestinationEnrichmentService) createLocationMapping(ctx context.Context, topDest models.TopDestination) (*models.LocationMapping, error) {
+	req := &maps.FindPlaceFromTextRequest{
+		Input:     fmt.Sprintf("%s, %s", topDest.City, topDest.Country),
+		InputType: maps.FindPlaceFromTextInputTypeTextQuery,
+		Fields: []maps.PlaceSearchFieldMask{
+			maps.PlaceSearchFieldMaskPlaceID,
+			maps.PlaceSearchFieldMaskName,
+			maps.PlaceSearchFieldMaskFormattedAddress,
+			maps.PlaceSearchFieldMaskGeometryLocationLat,
+			maps.PlaceSearchFieldMaskGeometryLocationLng,
+			maps.PlaceSearchFieldMaskTypes,
+			maps.PlaceSearchFieldMaskGeometry,
+		},
+	}
+
+	resp, err := s.mapsClient.FindPlaceFromText(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("error finding place: %v", err)
+	}
+
+	if len(resp.Candidates) == 0 {
+		return nil, fmt.Errorf("no places found for %s, %s", topDest.City, topDest.Country)
+	}
+
+	candidate := resp.Candidates[0]
+
+	var stateOrProvince = ""
+	if containsAdministrativeArea(candidate.Types) {
+		stateOrProvince = extractStateOrProvince(candidate.FormattedAddress)
+	}
+	standardName := models.ConstructStandardName("", topDest.City, stateOrProvince, topDest.Country)
+	mapping := &models.LocationMapping{
+		Id:               standardName,
+		StandardName:     standardName,
+		DisplayName:      candidate.Name,
+		FormattedAddress: candidate.FormattedAddress,
+		City:             topDest.City,
+		Country:          topDest.Country,
+		Latitude:         candidate.Geometry.Location.Lat,
+		Longitude:        candidate.Geometry.Location.Lng,
+		PlaceId:          candidate.PlaceID,
+		Types:            candidate.Types,
+		Aliases:          models.UniqueNonEmptyStrings(candidate.Name, candidate.FormattedAddress),
+		LastRequested:    time.Now(),
+	}
+	mapping = s.createDocRefs(mapping)
+	result, err := s.firestoreClient.Collection("location-mappings").Doc(mapping.Id).Set(ctx, mapping)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get internet speed document: %v", err)
+	}
+	logger.LogInfoLn(result.UpdateTime.GoString())
+	return mapping, nil
+}
+
+func (s *TopDestinationEnrichmentService) createDocRefs(mapping *models.LocationMapping) *models.LocationMapping {
+	if mapping.City != "" {
+		citySafetyPath := models.GetCitySafetyPath(mapping.City, mapping.Country)
+		citySafetyRef := s.firestoreClient.Doc(citySafetyPath)
+		mapping.CitySafetyRef = citySafetyRef
+	}
+
+	countrySafetyPath := models.GetCountrySafetyPath(mapping.Country)
+	countrySafetyRef := s.firestoreClient.Doc(countrySafetyPath)
+	mapping.CountrySafetyRef = countrySafetyRef
+
+	internetSpeedPath := models.GetInternetSpeedPathFromLocationMapping(*mapping)
+	internetSpeedRef := s.firestoreClient.Doc(internetSpeedPath)
+	mapping.InternetSpeedRef = internetSpeedRef
+
+	costOfLivingPath := models.GetCostOfLivingPath(mapping.City, mapping.Country)
+	costOfLivingRef := s.firestoreClient.Doc(costOfLivingPath)
+	mapping.CostOfLivingRef = costOfLivingRef
+
+	costOfLivingAnalyticsPath := models.GetCostOfLivingAnalyticsPath(mapping.City, mapping.Country)
+	costOfLivingAnalyticsRef := s.firestoreClient.Doc(costOfLivingAnalyticsPath)
+	mapping.CostOfLivingAnalyticsRef = costOfLivingAnalyticsRef
+	return mapping
+}
+
+func containsAdministrativeArea(types []string) bool {
+	for _, t := range types {
+		if t == "administrative_area_level_1" {
+			return true
+		}
+	}
+	return false
+}
+
+func extractStateOrProvince(formattedAddress string) string {
+	parts := strings.Split(formattedAddress, ",")
+	if len(parts) >= 3 {
+		return strings.TrimSpace(parts[len(parts)-2])
+	}
+	return ""
 }
 
 func (s *TopDestinationEnrichmentService) getInternetSpeed(ctx context.Context, ref *firestore.DocumentRef) (*models.InternetSpeed, error) {
@@ -290,10 +384,12 @@ func (s *TopDestinationEnrichmentService) fetchPhotosFromPexels(query string) ([
 		result.Photos[5].Src.Medium,
 		result.Photos[6].Src.Medium,
 		result.Photos[7].Src.Medium,
+		result.Photos[8].Src.Medium,
+		result.Photos[9].Src.Medium,
 	}, nil
 }
 
-func (s *TopDestinationEnrichmentService) saveDestination(ctx context.Context, dest TopDestination) error {
+func (s *TopDestinationEnrichmentService) saveDestination(ctx context.Context, dest models.TopDestination) error {
 	_, err := s.firestoreClient.Collection("top-destinations").Doc(dest.Id).Set(ctx, dest)
 	if err != nil {
 		return fmt.Errorf("failed to save destination: %v", err)

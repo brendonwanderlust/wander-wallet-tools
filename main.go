@@ -6,6 +6,8 @@ import (
 	"wander-wallet-tools/logger"
 	"wander-wallet-tools/models"
 	"wander-wallet-tools/services"
+
+	"googlemaps.github.io/maps"
 )
 
 func main() {
@@ -25,6 +27,11 @@ func main() {
 		logger.LogFatalLn("Firestore DB failed to initialize", err)
 	}
 	defer fsClient.Close()
+
+	mapsClient, err := maps.NewClient(maps.WithAPIKey(cfg.GoogleMapsAPIKey))
+	if err != nil {
+		logger.LogFatalLn("error creating Google Maps client: %v", err)
+	}
 
 	// costOfLivingService := services.NewCostOfLivingService(fsClient)
 	// costOfLivingService.PopulateCostOfTravelData(ctx)
@@ -46,7 +53,7 @@ func main() {
 	// 	logger.LogFatalLn("Failed to process and save top destinations: %v", err)
 	// }
 
-	enrichService := services.NewTopDestinationEnrichmentService(fsClient, cfg)
+	enrichService := services.NewTopDestinationEnrichmentService(fsClient, cfg, mapsClient)
 	err = enrichService.EnrichTopDestinations(ctx)
 	if err != nil {
 		logger.LogFatalLn("Failed to enrich top destinations: %v", err)
