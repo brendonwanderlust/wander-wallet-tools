@@ -31,9 +31,6 @@ type LocationMapping struct {
 	ContinentCode     string             `firestore:"continentCode,omitempty"`
 	Latitude          float64            `firestore:"latitude,omitempty"`
 	Longitude         float64            `firestore:"longitude,omitempty"`
-	Rank              int64              `firestore:"rank"`
-	PhotoUri1         string             `firestore:"photoUri1"`
-	PhotoUri2         string             `firestore:"photoUri2"`
 	Aliases           []string           `firestore:"aliases,omitempty"`
 	AddressComponents []AddressComponent `firestore:"addressComponents,omitempty"`
 	Types             []string           `firestore:"types,omitempty"`
@@ -129,7 +126,6 @@ func CreateLocationMappingFromMap(data map[string]interface{}) (*LocationMapping
 	mapping.Aliases = getStringSlice("aliases")
 	mapping.Types = getStringSlice("types")
 	mapping.Count = getInt64("count")
-	mapping.Rank = getInt64("rank")
 
 	// Handle AddressComponents
 	if addressComponentsData, ok := data["addressComponents"].([]interface{}); ok {
@@ -208,6 +204,7 @@ func MapAddressComponents(modelComponents []AddressComponent) []AddressComponent
 	}
 	return firestoreComponents
 }
+
 func UniqueNonEmptyStrings(strs ...string) []string {
 	unique := make(map[string]bool)
 	var result []string
